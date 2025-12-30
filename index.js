@@ -1,7 +1,6 @@
 const express = require('express');
 const puppeteer = require('puppeteer-core');
 const chromium = require('@sparticuz/chromium');
-const { Parser } = require('json2csv');
 const path = require('path');
 const fs = require('fs');
 
@@ -80,8 +79,19 @@ app.post('/extract', async (req, res) => {
 app.post('/download-csv', async (req, res) => {
   try {
     const { data } = req.body;
-    const parser = new Parser();
-    const csv = parser.parse(data);
+    
+    const headers = ['url', 'title', 'description', 'keywords', 'h1', 'h2', 'h3', 'canonical', 'canonicalIssue', 'robots'];
+    const csvRows = [headers.join(',')];
+    
+    data.forEach(row => {
+      const values = headers.map(header => {
+        const value = row[header] || '';
+        return `"${value.toString().replace(/"/g, '""')}"`;
+      });
+      csvRows.push(values.join(','));
+    });
+    
+    const csv = csvRows.join('\n');
     
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', 'attachment; filename="metadata.csv"');
