@@ -9,12 +9,17 @@ const app = express();
 app.use(express.json());
 
 async function extractMetadata(urls) {
-  const browser = await puppeteer.launch({ 
-    args: chromium.args,
-    defaultViewport: chromium.defaultViewport,
-    executablePath: await chromium.executablePath(),
-    headless: chromium.headless
-  });
+  let browser;
+  try {
+    browser = await puppeteer.launch({ 
+      args: [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox'],
+      defaultViewport: chromium.defaultViewport,
+      executablePath: await chromium.executablePath(),
+      headless: chromium.headless
+    });
+  } catch (error) {
+    return urls.map(url => ({ url, title: 'Browser Error', description: error.message, keywords: '', h1: '', h2: '', h3: '', canonical: '', canonicalIssue: 'No', robots: '' }));
+  }
   
   const results = await Promise.all(urls.map(async (url) => {
     const page = await browser.newPage();
@@ -52,14 +57,24 @@ async function extractMetadata(urls) {
     }
   }));
   
-  await browser.close();
+  if (browser) {
+    await browser.close();
+  }
   return results;
 }
 
 app.get('/', (req, res) => {
-  const htmlPath = path.join(__dirname, '..', 'public', 'index.html');
-  const html = fs.readFileSync(htmlPath, 'utf8');
-  res.send(html);
+  try {
+    const htmlPath = path.join(__dirname, '..', 'public', 'index.html');
+    if (fs.existsSync(htmlPath)) {
+      const html = fs.readFileSync(htmlPath, 'utf8');
+      res.send(html);
+    } else {
+      res.send('<h1>Metadata Extractor</h1><p>HTML file not found</p>');
+    }
+  } catch (error) {
+    res.status(500).send('<h1>Error</h1><p>' + error.message + '</p>');
+  }
 });
 
 app.post('/extract', async (req, res) => {
