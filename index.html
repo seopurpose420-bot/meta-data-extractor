@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metadata Extractor Pro</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        .input-section {
+            padding: 40px;
+            background: #f8f9fa;
+        }
+        .url-input-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .url-list {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            min-height: 120px;
+            padding: 15px;
+            font-size: 14px;
+            resize: vertical;
+            width: 100%;
+            transition: border-color 0.3s;
+        }
+        .url-list:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+        .input-help {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+        }
+        .btn-container {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+        }
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .results {
+            padding: 40px;
+            display: none;
+        }
+        .metadata-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+        .metadata-table th {
+            background: #667eea;
+            color: white;
+            padding: 12px 8px;
+            text-align: left;
+            font-weight: 500;
+            position: sticky;
+            top: 0;
+        }
+        .metadata-table td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #e9ecef;
+            vertical-align: top;
+            word-break: break-word;
+            max-width: 200px;
+        }
+        .metadata-table tr:hover {
+            background: #f8f9fa;
+        }
+        .canonical-issue-yes {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .canonical-issue-no {
+            color: #28a745;
+        }
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .results-title {
+            font-size: 1.8rem;
+            color: #333;
+            font-weight: 300;
+        }
+        .actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        .btn-success:hover, .btn-info:hover, .btn-warning:hover {
+            transform: translateY(-2px);
+            opacity: 0.9;
+        }
+        .metadata-grid {
+            display: grid;
+            gap: 20px;
+        }
+        .metadata-card {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .metadata-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f8f9fa;
+        }
+        .card-url {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 1.1rem;
+            word-break: break-all;
+        }
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .metadata-item {
+            margin: 12px 0;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        .metadata-label {
+            font-weight: 600;
+            color: #495057;
+            display: inline-block;
+            min-width: 120px;
+            margin-bottom: 5px;
+        }
+        .metadata-value {
+            color: #6c757d;
+            word-break: break-word;
+        }
+        .error-message {
+            color: #dc3545;
+            background: #f8d7da;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #dc3545;
+        }
+        @media (max-width: 768px) {
+            .header h1 { font-size: 2rem; }
+            .input-section, .results { padding: 20px; }
+            .btn-container { flex-direction: column; }
+            .btn { justify-content: center; }
+            .results-header { flex-direction: column; align-items: stretch; }
+            .actions { justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-search"></i> Metadata Extractor Pro</h1>
+            <p>Extract comprehensive metadata from multiple URLs instantly</p>
+        </div>
+        
+        <div class="input-section">
+            <div class="url-input-container">
+                <textarea 
+                    id="urlInput" 
+                    class="url-list" 
+                    placeholder="Enter URLs (one per line):
+
+https://example.com
+https://google.com
+https://github.com"
+                    rows="6"
+                ></textarea>
+            </div>
+            <div class="input-help">
+                <i class="fas fa-info-circle"></i> Enter one URL per line. You can process multiple URLs simultaneously.
+            </div>
+            
+            <div class="btn-container">
+                <button class="btn btn-primary" onclick="extractMetadata()">
+                    <i class="fas fa-magic"></i> Extract Metadata
+                </button>
+                <button class="btn btn-secondary" onclick="clearAll()">
+                    <i class="fas fa-trash"></i> Clear All
+                </button>
+            </div>
+            
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <div>Extracting metadata from URLs...</div>
+            </div>
+        </div>
+        
+        <div class="results" id="results">
+            <div class="results-header">
+                <h2 class="results-title">Metadata Results</h2>
+                <div class="actions">
+                    <button class="btn btn-success" onclick="copyToClipboard()">
+                        <i class="fas fa-copy"></i> Copy All
+                    </button>
+                    <button class="btn btn-info" onclick="downloadCSV()">
+                        <i class="fas fa-file-csv"></i> Download CSV
+                    </button>
+                    <button class="btn btn-warning" onclick="downloadExcel()">
+                        <i class="fas fa-file-excel"></i> Download Excel
+                    </button>
+                </div>
+            </div>
+            
+            <div class="metadata-grid" id="metadataDisplay"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentMetadata = null;
+
+        async function extractMetadata() {
+            const urlText = document.getElementById('urlInput').value.trim();
+            if (!urlText) {
+                alert('Please enter at least one URL');
+                return;
+            }
+
+            const urls = urlText.split('\n')
+                .map(url => url.trim())
+                .filter(url => url.length > 0);
+
+            if (urls.length === 0) {
+                alert('Please enter valid URLs');
+                return;
+            }
+
+            document.getElementById('loading').style.display = 'block';
+            
+            try {
+                const response = await fetch('/extract', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ urls })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    currentMetadata = data;
+                    displayMetadata(data);
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        function displayMetadata(dataArray) {
+            const display = document.getElementById('metadataDisplay');
+            
+            const tableHTML = `
+                <table class="metadata-table">
+                    <thead>
+                        <tr>
+                            <th>URL</th>
+                            <th>Title</th>
+                            <th>Description</th>
+                            <th>Keywords</th>
+                            <th>H1</th>
+                            <th>H2</th>
+                            <th>H3</th>
+                            <th>Canonical</th>
+                            <th>Canonical Issue</th>
+                            <th>Robots</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${dataArray.map(data => `
+                            <tr>
+                                <td><a href="${data.url}" target="_blank">${data.url}</a></td>
+                                <td>${data.title || 'N/A'}</td>
+                                <td>${data.description || 'N/A'}</td>
+                                <td>${data.keywords || 'N/A'}</td>
+                                <td>${data.h1 || 'N/A'}</td>
+                                <td>${data.h2 || 'N/A'}</td>
+                                <td>${data.h3 || 'N/A'}</td>
+                                <td>${data.canonical || 'N/A'}</td>
+                                <td class="canonical-issue-${data.canonicalIssue?.toLowerCase()}">${data.canonicalIssue || 'No'}</td>
+                                <td>${data.robots || 'N/A'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            display.innerHTML = tableHTML;
+            document.getElementById('results').style.display = 'block';
+        }
+
+        function copyToClipboard() {
+            if (!currentMetadata) return;
+            
+            const headers = ['URL', 'Title', 'Description', 'Keywords', 'H1', 'H2', 'H3', 'Canonical', 'Canonical Issue', 'Robots'];
+            const csvData = [headers.join('\t')];
+            
+            currentMetadata.forEach(data => {
+                const row = [
+                    data.url || '',
+                    data.title || '',
+                    data.description || '',
+                    data.keywords || '',
+                    data.h1 || '',
+                    data.h2 || '',
+                    data.h3 || '',
+                    data.canonical || '',
+                    data.canonicalIssue || 'No',
+                    data.robots || ''
+                ];
+                csvData.push(row.join('\t'));
+            });
+            
+            const text = csvData.join('\n');
+            
+            navigator.clipboard.writeText(text).then(() => {
+                alert('✅ All metadata copied to clipboard in table format!');
+            });
+        }
+
+        async function downloadCSV() {
+            if (!currentMetadata) return;
+            
+            const response = await fetch('/download-csv', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ data: currentMetadata })
+            });
+            
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'metadata.csv';
+            a.click();
+        }
+
+        function downloadExcel() {
+            if (!currentMetadata) return;
+            
+            const worksheet = XLSX.utils.json_to_sheet(currentMetadata);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Metadata');
+            XLSX.writeFile(workbook, 'metadata.xlsx');
+        }
+
+        function clearAll() {
+            document.getElementById('urlInput').value = '';
+            document.getElementById('results').style.display = 'none';
+            currentMetadata = null;
+        }
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</body>
+</html>
